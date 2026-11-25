@@ -30,10 +30,14 @@ public class AiConfig {
 
     @Bean
     public EmbeddingModel embeddingModel(@Value("${openai.embedding.api-key}") String apiKey,
-                                         @Value("${openai.embedding.base-url}") String baseUrl) {
+                                         @Value("${openai.embedding.base-url}") String baseUrl,
+                                         RestClient.Builder restClientBuilder,
+                                         WebClient.Builder webClientBuilder) {
         OpenAiApi api = OpenAiApi.builder()
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
+                .restClientBuilder(restClientBuilder)
+                .webClientBuilder(webClientBuilder)
                 .build();
         OpenAiEmbeddingOptions options = new OpenAiEmbeddingOptions();
         options.setModel("BAAI/bge-large-zh-v1.5");
