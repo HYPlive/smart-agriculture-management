@@ -1,4 +1,4 @@
-package com.example.smartAgr.config;
+package com.example.smartAgr;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -10,7 +10,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins("http://123.56.228.32:8080") // 前端地址
+                .allowedOrigins("localhost:8080") // 前端地址
                 .allowedMethods("GET", "POST");
     }
 }

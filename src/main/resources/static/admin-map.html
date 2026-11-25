@@ -6,9 +6,9 @@
     <title>地块绘制</title>
 
     <!-- Leaflet 和 Draw 样式 -->
-    <link rel="stylesheet" href="lib/css/leaflet.css"/>
-    <link rel="stylesheet" href="lib/css/leaflet.draw.css"/>
-    <link rel="stylesheet" href="lib/css/layui.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.8.18/css/layui.css"/>
     <link rel="stylesheet" href="lib/css/leaflet.css"/>
     <link rel="stylesheet" href="lib/css/leaflet.draw.css"/>
     <!-- Layui 样式 -->
@@ -16,7 +16,354 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="lib/css/font-awesome.min.css"/>
 
-    <link rel="stylesheet" href="css/admin-map.css"/>
+    <style>
+        :root {
+            --primary-color: #1E88E5;
+            --secondary-color: #43A047;
+            --accent-color: #FF6D00;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --bg-light: #F5F7FA;
+            --bg-dark: #E4E7ED;
+            --border-color: #EBEEF5;
+            --shadow-light: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: var(--bg-light);
+            overflow: hidden;
+            font-family: "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: var(--text-primary);
+        }
+
+        body > .layui-container {
+            width: 100vw;
+            max-width: 100vw;
+            padding: 0;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .layui-card {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .layui-form {
+            flex: 0 0 auto;
+            padding: 16px 24px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+            box-shadow: var(--shadow-light);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .layui-card-body {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #map {
+            flex: 1 1 auto;
+            width: 100%;
+            height: calc(100vh - 72px);
+            min-height: 0;
+            min-width: 0;
+            position: relative;
+            z-index: 1;
+            background-color: #e9ecef;
+        }
+
+        .search-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .search-group .layui-input {
+            height: 40px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            padding: 0 14px;
+            font-size: 14px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-group .layui-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.2);
+            outline: none;
+        }
+
+        .search-group .layui-btn {
+            height: 40px;
+            line-height: 40px;
+            padding: 0 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .search-group .layui-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-buttons .layui-btn {
+            height: 40px;
+            line-height: 40px;
+            padding: 0 18px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .action-buttons .layui-btn i {
+            font-size: 16px;
+        }
+
+        .action-buttons .layui-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-buttons .layui-btn-primary {
+            border-color: #DCDFE6;
+            color: var(--text-primary);
+        }
+
+        .action-buttons .layui-btn-primary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .action-buttons .layui-btn-normal {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .action-buttons .layui-btn-warm {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .action-buttons .layui-btn-red {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        #drawControls {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 10px;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            z-index: 9999;
+            box-shadow: var(--shadow-medium);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        #drawControls .layui-btn {
+            height: 40px;
+            line-height: 40px;
+            padding: 0 18px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        #drawControls .layui-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        #drawTip {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+            padding: 18px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            z-index: 9999;
+            box-shadow: var(--shadow-medium);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #drawTip i {
+            font-size: 20px;
+            color: var(--accent-color);
+        }
+
+        @media (min-width: 769px) {
+            #toggleSliderBtn {
+                display: flex;
+                position: fixed;
+                top: 24px;
+                right: 24px;
+                z-index: 10000;
+                box-shadow: var(--shadow-light);
+                border-radius: 6px;
+                height: 40px;
+                line-height: 40px;
+                padding: 0 18px;
+                font-size: 14px;
+                font-weight: 500;
+                gap: 6px;
+                transition: all 0.2s;
+            }
+
+            #toggleSliderBtn:hover {
+                transform: translateY(-1px);
+                box-shadow: var(--shadow-medium);
+            }
+        }
+
+        #ndviSliderWrapper {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            padding: 20px 32px;
+            display: none;
+            z-index: 9999;
+            font-size: 15px;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        #ndviTimeSelect {
+            width: 200px;
+            margin-left: 10px;
+            height: 38px;
+            line-height: 38px;
+        }
+
+        @media (max-width: 768px) {
+            .layui-form {
+                padding: 10px 12px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .search-group {
+                width: 100%;
+                gap: 8px;
+            }
+
+            .search-group .layui-input {
+                height: 32px;
+                padding: 0 10px;
+                font-size: 12px;
+            }
+
+            .search-group .layui-btn {
+                height: 32px;
+                padding: 0 12px;
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                width: 100%;
+                justify-content: space-between;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            .action-buttons .layui-btn {
+                height: 32px;
+                padding: 0 10px;
+                font-size: 12px;
+                gap: 4px;
+            }
+
+            .action-buttons .layui-btn i {
+                font-size: 12px;
+            }
+
+            #drawControls {
+                bottom: 16px;
+                padding: 6px 12px;
+                gap: 8px;
+            }
+
+            #drawControls .layui-btn {
+                height: 32px;
+                padding: 0 8px;
+                font-size: 11px;
+            }
+
+            #drawTip {
+                padding: 12px 18px;
+                font-size: 13px;
+            }
+
+            #drawTip i {
+                font-size: 14px;
+            }
+
+            #ndviSliderWrapper {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+
+            #ndviTimeSelect {
+                width: 150px;
+            }
+
+            #map {
+                height: calc(100vh - 150px);
+            }
+        }
+    </style>
 </head>
 
 
@@ -165,6 +512,90 @@
     let selectedAIPolygon = null; // 当前选中的 AI 地块
     let aiSelectMode = false; // 是否处于 AI 选地模式
     const simplifyRange = document.getElementById("simplifyRange");
+
+    // ================= 保存后刷新并回定位 =================
+    const PLOT_FOCUS_STORAGE_KEY = "plot_focus_after_save";
+
+    function savePlotFocusInfo(plot) {
+        try {
+            const coord = typeof plot.coordinates === "string"
+                ? JSON.parse(plot.coordinates)
+                : plot.coordinates;
+
+            let center = null;
+            let zoom = 18;
+
+            if (coord.shapeType === "circle" && coord.center) {
+                center = [coord.center.lat, coord.center.lng];
+            } else if (coord.shapeType === "polygon" && Array.isArray(coord.latlngs) && coord.latlngs.length > 0) {
+                const bounds = L.latLngBounds(coord.latlngs);
+                const c = bounds.getCenter();
+                center = [c.lat, c.lng];
+            }
+
+            if (!center) return;
+
+            sessionStorage.setItem(PLOT_FOCUS_STORAGE_KEY, JSON.stringify({
+                id: plot.id,
+                center,
+                zoom,
+                time: Date.now()
+            }));
+        } catch (e) {
+            console.warn("保存地块定位信息失败：", e);
+        }
+    }
+
+    function restorePlotFocusAfterReload() {
+        try {
+            const raw = sessionStorage.getItem(PLOT_FOCUS_STORAGE_KEY);
+            if (!raw) return;
+
+            const focusInfo = JSON.parse(raw);
+
+            // 5分钟过期，避免旧数据误触发
+            if (!focusInfo.time || Date.now() - focusInfo.time > 5 * 60 * 1000) {
+                sessionStorage.removeItem(PLOT_FOCUS_STORAGE_KEY);
+                return;
+            }
+
+            setTimeout(() => {
+                if (!map) return;
+
+                let found = false;
+
+                map.eachLayer(layer => {
+                    if (layer && layer.plotId === focusInfo.id) {
+                        found = true;
+
+                        if (typeof layer.getBounds === "function") {
+                            map.fitBounds(layer.getBounds().pad(0.3));
+                        } else if (typeof layer.getLatLng === "function") {
+                            map.setView(layer.getLatLng(), focusInfo.zoom || 18, {animate: true});
+                        } else if (focusInfo.center) {
+                            map.setView(focusInfo.center, focusInfo.zoom || 18, {animate: true});
+                        }
+
+                        setTimeout(() => {
+                            if (typeof layer.openPopup === "function") {
+                                layer.openPopup();
+                            }
+                        }, 300);
+                    }
+                });
+
+                if (!found && focusInfo.center) {
+                    map.setView(focusInfo.center, focusInfo.zoom || 18, {animate: true});
+                }
+
+                sessionStorage.removeItem(PLOT_FOCUS_STORAGE_KEY);
+            }, 1000);
+        } catch (e) {
+            console.warn("恢复地块定位失败：", e);
+            sessionStorage.removeItem(PLOT_FOCUS_STORAGE_KEY);
+        }
+    }
+
     // 把后端原始地块数组转成 /admin/ndvicut 接口需要的格式
     function transformPlotsForNdviCut(rawPlots, dateStr) {
         const plots = rawPlots.map(item => {
@@ -190,8 +621,9 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
         initMap();
-        loadPlots();  // 你自己写的初始化地块，保持不变
+        await loadPlots();
         setupSearch();
+        restorePlotFocusAfterReload();
 
         const regionSelect = document.getElementById("ndviRegionSelect");
         timeSelect = document.getElementById("ndviTimeSelect");
@@ -219,7 +651,7 @@
             currentNdviTime = null;
 
             try {
-                const res = await fetch(`http://123.56.228.32:8000/admin/ndvilist?region=${region}`, {
+                const res = await fetch(`http://localhost:8080/admin/ndvilist?region=${region}`, {
                     headers: {"token": token}
                 });
                 const ndviList = await res.json();
@@ -262,7 +694,6 @@
         });
 
         // ================= 选择日期 -> 调用裁剪接口 =================
-        // 选择日期 -> 调用裁剪接口
         timeSelect.addEventListener("change", async () => {
             const region = regionSelect.value;
             const selectedTime = timeSelect.value;
@@ -270,10 +701,9 @@
             if (selectedTime === currentNdviTime) return;
             currentNdviTime = selectedTime;
 
-            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2"); // "2024-08-18" -> "2024_0818"
+            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2");
             showCustomMsg("⏳ 正在裁剪并加载 NDVI...");
 
-            // 移除旧图层
             if (ndviLayers.length > 0) {
                 ndviLayers.forEach(layer => map.removeLayer(layer));
                 ndviLayers = [];
@@ -284,8 +714,7 @@
             console.log("[DEBUG] 选择日期：", selectedTime, "转换为 API 日期：", dateForApi);
 
             try {
-                // 获取地块信息
-                const resPlots = await fetch('http://123.56.228.32:8080/admin/plots', {
+                const resPlots = await fetch('http://localhost:8080/admin/plots', {
                     headers: {"token": token}
                 });
                 const rawPlots = await resPlots.json();
@@ -298,8 +727,7 @@
                 const requestData = transformPlotsForNdviCut(rawPlots, dateForApi);
                 requestData.region = region;
 
-                // 调用裁剪接口
-                const resCut = await fetch('http://123.56.228.32:8000/admin/ndvicut', {
+                const resCut = await fetch('http://localhost:8080/admin/ndvicut', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -316,18 +744,12 @@
                     return;
                 }
 
-                // 渲染成功的NDVI图层
                 for (const item of results.success) {
                     try {
                         console.log(`[DEBUG] 加载图层: ${item.png_filename}, URL: ${item.png_url}`);
-
-                        // 创建 Leaflet ImageOverlay
                         const layer = L.imageOverlay(item.png_url, item.bounds, {opacity: 1.0});
                         layer.addTo(map);
-
-                        // 保存到 ndviLayers
                         ndviLayers.push(layer);
-
                     } catch (err) {
                         console.error(`加载 ${item.png_filename} 失败:`, err);
                         showCustomMsg(`❌ ${item.plotname} 图层加载失败`);
@@ -343,7 +765,6 @@
             }
         });
 
-
         // 移除 NDVI
         removeNdviBtn.addEventListener("click", () => {
             if (ndviLayers.length > 0) {
@@ -352,7 +773,6 @@
                 currentNdviTime = null;
                 timeSelect.value = "";
                 showCustomMsg("🗑️ 已移除所有 NDVI 图层");
-                // 调试输出当前地图的图层
                 console.log("[DEBUG] 当前地图上的所有图层：", map._layers);
             } else {
                 showCustomMsg("⚠️ 当前没有 NDVI 图层可移除");
@@ -370,33 +790,6 @@
             }
         });
     });
-
-    // ================= 像素值转颜色函数 =================
-    /*function pixelToColor(values) {
-        const ndvi = values[0];
-        if (
-            ndvi === null ||
-            isNaN(ndvi) ||
-            ndvi <= 0 ||
-            ndvi < -0.2 ||
-            ndvi === -9999
-        ) return null;
-
-        if (ndvi < 0.05) return "#d73027";
-        if (ndvi < 0.1) return "#f46d43";
-        if (ndvi < 0.15) return "#fdae61";
-        if (ndvi < 0.2) return "#fee08b";
-        if (ndvi < 0.25) return "#ffffbf";
-        if (ndvi < 0.3) return "#d9ef8b";
-        if (ndvi < 0.35) return "#a6d96a";
-        if (ndvi < 0.4) return "#66bd63";
-        if (ndvi < 0.45) return "#1a9850";
-        if (ndvi < 0.55) return "#008837";
-        if (ndvi < 0.65) return "#006837";
-        if (ndvi < 0.75) return "#00441b";
-        return "#003300";
-    }*/
-
 
     /**
      * 初始化地图与绘图控件
@@ -437,7 +830,15 @@
 
         window.drawControl = new L.Control.Draw({
             draw: {
-                polygon: true,
+                polygon: {
+                    allowIntersection: false,
+                    showArea: true,
+                    shapeOptions: {
+                        color: '#1ed960',
+                        weight: 2,
+                        dashArray: null
+                    }
+                },
                 rectangle: false,
                 marker: false,
                 circle: false,
@@ -468,9 +869,11 @@
                 area = L.GeometryUtil.geodesicArea(latlngs);
 
                 const coordsForTurf = latlngs.map(p => [p.lng, p.lat]);
-                if (coordsForTurf.length > 0 &&
+                if (
+                    coordsForTurf.length > 0 &&
                     (coordsForTurf[0][0] !== coordsForTurf[coordsForTurf.length - 1][0] ||
-                        coordsForTurf[0][1] !== coordsForTurf[coordsForTurf.length - 1][1])) {
+                        coordsForTurf[0][1] !== coordsForTurf[coordsForTurf.length - 1][1])
+                ) {
                     coordsForTurf.push(coordsForTurf[0]);
                 }
                 const centroid = turf.centroid(turf.polygon([coordsForTurf]));
@@ -480,12 +883,11 @@
                 return;
             }
 
-            area = (area / 666.67).toFixed(2); // 转亩
+            area = (area / 666.67).toFixed(2);
 
             let address = "未知位置";
             if (centerForGeocode) {
                 try {
-                    // 高德地图API（非http://123.56.228.32请求，不加token）
                     const res = await fetch(`https://restapi.amap.com/v3/geocode/regeo?location=${centerForGeocode[0]},${centerForGeocode[1]}&key=9c7f97e95b93948af40ddab4871ffa18`);
                     const data = await res.json();
                     if (data.regeocode?.formatted_address) {
@@ -515,12 +917,9 @@
                         plotData.coordinates = coordinates;
                         plotData.area = area;
                         plotData.address = address;
-                        //TODO这里和用户端地块名称叫的不一样，全是bug妈的，先凑合用吧。
-                        //TODO 修改地块还有bug，到时候统一一下管理端字段名，一起改吧
 
                         try {
-                            // http://123.56.228.32:8080请求，添加token头
-                            const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                            const res = await fetch("http://localhost:8080/admin/plots", {
                                 method: "POST",
                                 headers: {
                                     "Content-Type": "application/json",
@@ -535,8 +934,11 @@
                             console.log("发送到后端的数据:", plotData);
 
                             layer.close(index);
+
+                            savePlotFocusInfo(saved);
+
                             alert("保存成功！");
-                            displayPlot(saved);
+                            location.reload();
 
                         } catch (err) {
                             console.error("保存失败：", err);
@@ -559,7 +961,6 @@
                 layer.close(loading);
             }
         }
-
 
         // AI 自动圈地按钮
         const btn = document.getElementById("btnAiDraw");
@@ -619,7 +1020,7 @@
                     ]));
 
                     try {
-                        const res = await fetch("http://123.56.228.32:8001/predict", {
+                        const res = await fetch("http://localhost:8001/predict", {
                             method: "POST",
                             body: payload
                         });
@@ -628,7 +1029,7 @@
                         const data = await res.json();
 
                         if (data.polygons) {
-                            const simplifyRes = await fetch("http://123.56.228.32:8003/simplify", {
+                            const simplifyRes = await fetch("http://localhost:8003/simplify", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
@@ -755,7 +1156,6 @@
      */
     function openPlotForm(poly) {
         const area = (L.GeometryUtil.geodesicArea(poly.getLatLngs()[0]) / 666.67).toFixed(2);
-        //const url = `admin-plot-add.html?area=${area}`;
 
         const latlngs = poly.getLatLngs()[0];
         const coordinates = JSON.stringify({ shapeType: "polygon", latlngs });
@@ -793,12 +1193,9 @@
                     plotData.coordinates = coordinates;
                     plotData.area = area;
                     plotData.address = address;
-                    //TODO这里和用户端地块名称叫的不一样，全是bug妈的，先凑合用吧。
-                    //TODO 修改地块还有bug，到时候统一一下管理端字段名，一起改吧
 
                     try {
-                        // http://123.56.228.32:8080请求，添加token头
-                        const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                        const res = await fetch("http://localhost:8080/admin/plots", {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
@@ -813,8 +1210,11 @@
                         console.log("发送到后端的数据:", plotData);
 
                         layer.close(index);
+
+                        savePlotFocusInfo(saved);
+
                         alert("保存成功！");
-                        displayPlot(saved);
+                        location.reload();
 
                     } catch (err) {
                         console.error("保存失败：", err);
@@ -823,17 +1223,17 @@
                 }
             }, {once: true});
         });
+
         const width = 667, height = 543;
         const left = (window.screen.width - width) / 2;
         const top = (window.screen.height - height) / 2;
     }
+
     /**
      * 加载地块数据并渲染，包括热力图
-     * 传入图层控制器和图层对象，方便动态添加
      */
     async function loadAndRenderPlots(layersControl, baseMaps, overlayMaps) {
         try {
-            // 1. 检查地图容器是否准备就绪
             const mapContainer = document.getElementById('map');
             if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
                 console.warn('地图容器不可见，延迟加载');
@@ -841,10 +1241,9 @@
                 return;
             }
 
-            // 2. 获取真实地块数据（http://123.56.228.32:8080请求，添加token头）
-            let plots;
+            let plots = [];
             try {
-                const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                const res = await fetch("http://localhost:8080/admin/plots", {
                     headers: {
                         "token": token
                     }
@@ -856,19 +1255,16 @@
                 alert("警告：API请求错误，真实数据加载失败");
             }
 
-            // 3. 渲染地块并计算地图范围
             const featureGroup = L.featureGroup();
             plots.forEach(plot => {
                 const layer = displayPlot(plot);
                 if (layer) featureGroup.addLayer(layer);
             });
 
-            // 自动调整地图视野（包含所有地块+10%边距）
             if (plots.length > 0) {
                 map.fitBounds(featureGroup.getBounds().pad(0.1));
             }
 
-            // 4. 生成增强版热力图数据
             const heatPoints = plots.flatMap((plot, index) => {
                 try {
                     if (!plot.coordinates) {
@@ -878,20 +1274,17 @@
 
                     const coord = JSON.parse(plot.coordinates);
 
-                    // 圆形地块处理
                     if (coord.shapeType === "circle" && coord.center) {
                         return [
-                            [coord.center.lat, coord.center.lng, 1.0], // 中心点
-                            [coord.center.lat + 0.0002, coord.center.lng, 0.6], // 周边点
+                            [coord.center.lat, coord.center.lng, 1.0],
+                            [coord.center.lat + 0.0002, coord.center.lng, 0.6],
                             [coord.center.lat - 0.0002, coord.center.lng, 0.6]
                         ];
-                    }
-                    // 多边形地块处理
-                    else if (coord.shapeType === "polygon" && Array.isArray(coord.latlngs)) {
+                    } else if (coord.shapeType === "polygon" && Array.isArray(coord.latlngs)) {
                         const bounds = L.latLngBounds(coord.latlngs);
                         return [
-                            [bounds.getCenter().lat, bounds.getCenter().lng, 1.0], // 中心点
-                            [bounds.getSouthWest().lat, bounds.getSouthWest().lng, 0.6], // 边界点
+                            [bounds.getCenter().lat, bounds.getCenter().lng, 1.0],
+                            [bounds.getSouthWest().lat, bounds.getSouthWest().lng, 0.6],
                             [bounds.getNorthEast().lat, bounds.getNorthEast().lng, 0.6]
                         ];
                     }
@@ -908,9 +1301,8 @@
 
             console.log("生成的热力点数据:", heatPoints);
 
-            // 5. 安全创建热力图
             if (heatLayer) {
-                map.removeLayer(heatLayer);  //
+                map.removeLayer(heatLayer);
                 if (layersControl && overlayMaps["热力图"]) {
                     layersControl.removeLayer(overlayMaps["热力图"]);
                 }
@@ -919,11 +1311,11 @@
 
             if (heatPoints.length > 0 && typeof L.heatLayer === "function") {
                 heatLayer = L.heatLayer(heatPoints, {
-                    radius: 28,    // 控制热力点影响范围（像素）
-                    blur: 15,      // 控制模糊程度（越大越柔和）
-                    maxZoom: 18,   // 热力图最大显示级别
-                    minOpacity: 0.1, // 最小透明度（避免颜色太淡）
-                    gradient: {           // 自定义颜色渐变
+                    radius: 28,
+                    blur: 15,
+                    maxZoom: 18,
+                    minOpacity: 0.1,
+                    gradient: {
                         0.4: 'blue',
                         0.6: 'cyan',
                         0.7: 'lime',
@@ -934,7 +1326,6 @@
 
                 overlayMaps["热力图"] = heatLayer;
 
-                // 添加热力图影像图层切换按钮
                 if (layersControl) {
                     layersControl.addOverlay(heatLayer, "热力图");
                 }
@@ -946,10 +1337,8 @@
         }
     }
 
-
     /**
      * 获取当前定位
-     * @returns {Promise<unknown>}
      */
     function getCurrentLocation() {
         return new Promise((resolve, reject) => {
@@ -969,24 +1358,33 @@
         });
     }
 
-
     /**
      * 加载并渲染后端地块
      */
     async function loadPlots() {
         try {
-            // http://123.56.228.32:8080请求，添加token头
-            const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+            const res = await fetch("http://localhost:8080/admin/plots", {
                 headers: {
                     "token": token
                 }
             });
             if (!res.ok) throw new Error("请求失败");
+
             const plots = await res.json();
+
+            // 防止重复绘制时可先清理已有 plot 图层
+            map.eachLayer(layer => {
+                if (layer && layer.plotId) {
+                    map.removeLayer(layer);
+                }
+            });
+
             plots.forEach(displayPlot);
+            return plots;
         } catch (err) {
             console.error("地块加载失败：", err);
             alert("加载失败，请检查服务是否运行");
+            return [];
         }
     }
 
@@ -994,11 +1392,14 @@
      * 渲染单个地块
      */
     function displayPlot(plot) {
-        const data = JSON.parse(plot.coordinates);
+        const data = typeof plot.coordinates === "string"
+            ? JSON.parse(plot.coordinates)
+            : plot.coordinates;
+
         let layerOptions = {
-            color: '#3388ff',     // 边框颜色
-            weight: 2,            // 边框宽度
-            fillOpacity: 0       // 中间透明，避免遮盖 NDVI 图层
+            color: '#3388ff',
+            weight: 2,
+            fillOpacity: 0
         };
         let layer;
 
@@ -1014,23 +1415,26 @@
             return;
         }
 
+        // 关键：挂载 plotId，方便刷新后回定位
+        layer.plotId = plot.id;
+        layer.plotData = plot;
+
         layer.addTo(map).bindPopup(`
-        <b>地块名称:</b> ${plot.plotName}<br>
-        <b>上季作物:</b> ${plot.lastCrop}<br>
-        <b>本季作物:</b> ${plot.currentCrop}<br>
-        <b>联系人:</b> ${plot.contactPerson}<br>
-        <b>联系电话:</b> ${plot.phone}<br>
-        <b>土壤类型:</b> ${plot.soilType}<br>
-        <b>灌溉条件:</b> ${plot.irrigationType}<br>
-        <b>土地类型:</b> ${plot.landType}<br>
-        <b>面积:</b> ${plot.area} 亩<br>
-        <button onclick="updateArea(${plot.id})">修改面积</button>
-        <button onclick="deletePlot(${plot.id})">删除</button>
-    `);
+            <b>地块名称:</b> ${plot.plotName}<br>
+            <b>上季作物:</b> ${plot.lastCrop}<br>
+            <b>本季作物:</b> ${plot.currentCrop}<br>
+            <b>联系人:</b> ${plot.contactPerson}<br>
+            <b>联系电话:</b> ${plot.phone}<br>
+            <b>土壤类型:</b> ${plot.soilType}<br>
+            <b>灌溉条件:</b> ${plot.irrigationType}<br>
+            <b>土地类型:</b> ${plot.landType}<br>
+            <b>面积:</b> ${plot.area} 亩<br>
+            <button onclick="updateArea(${plot.id})">修改面积</button>
+            <button onclick="deletePlot(${plot.id})">删除</button>
+        `);
 
         return layer;
     }
-
 
     /**
      * 删除地块
@@ -1039,8 +1443,7 @@
         if (!confirm("确认删除该地块？")) return;
 
         try {
-            // http://123.56.228.32:8080请求，添加token头
-            const res = await fetch(`http://123.56.228.32:8080/admin/plots/${id}`, {
+            const res = await fetch(`http://localhost:8080/admin/plots/${id}`, {
                 method: "DELETE",
                 headers: {
                     "token": token
@@ -1050,14 +1453,13 @@
             if (!res.ok) throw new Error("删除失败");
 
             alert("删除成功，请刷新页面查看...");
-            loadPlots(); // 重新加载地块数据，刷新地图展示
+            loadPlots();
 
         } catch (err) {
             console.error(err);
             alert("删除失败，请检查后端接口或网络状态");
         }
     }
-
 
     /**
      * 搜索地址并跳转地图位置
@@ -1076,7 +1478,6 @@
             const url = `https://api.tianditu.gov.cn/geocoder?ds={"keyWord":"${keyword}"}&tk=19fc987939ebbcbcb3f0954ab6cf75be`;
 
             try {
-                // 天地图API（非http://123.56.228.32请求，不加token）
                 const res = await fetch(url);
                 const data = await res.json();
                 if (data?.location) {
@@ -1100,7 +1501,6 @@
         });
     }
 
-
     /**
      * 修改面积（亩）
      */
@@ -1119,14 +1519,13 @@
         }
 
         try {
-            // http://123.56.228.32:8080请求，添加token头
-            const res = await fetch(`http://123.56.228.32:8080/admin/plots/${id}/area`, {
+            const res = await fetch(`http://localhost:8080/admin/plots/${id}/area`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     "token": token
                 },
-                body: JSON.stringify({area: parseFloat(area.toFixed(2))}) // 保留两位小数
+                body: JSON.stringify({area: parseFloat(area.toFixed(2))})
             });
 
             if (!res.ok) throw new Error("更新失败");
@@ -1138,7 +1537,6 @@
         }
     }
 
-
     // 全屏地图绘制
     const drawControls = document.getElementById('drawControls');
     drawControls.style.display = 'none';
@@ -1147,7 +1545,6 @@
     let currentDrawer = null;
     let drawingFinished = false;
 
-    // 退出全屏清理逻辑封装
     function handleExitFullscreenCleanup() {
         console.log('退出全屏，清理绘图状态...');
         drawControls.style.display = 'none';
@@ -1156,22 +1553,19 @@
             currentDrawer = null;
         }
 
-        // 如果是绘制完成后退出全屏，显示填写弹窗
         if (drawingFinished) {
             setTimeout(() => {
-                drawingFinished = false; // 重置状态
+                drawingFinished = false;
             }, 100);
         }
     }
 
-    // 监听全屏变化（退出时清理）
     document.addEventListener("fullscreenchange", () => {
         if (!document.fullscreenElement) {
             handleExitFullscreenCleanup();
         }
     });
 
-    // 进入全屏并初始化地图状态（不自动绘图）
     async function enterDrawMode() {
         const mapContainer = document.getElementById("map");
         console.log('请求进入全屏...');
@@ -1192,7 +1586,6 @@
                 map.setZoom(17);
 
                 try {
-                    // 替换原来的定位代码
                     const currentCenter = map.getCenter();
                     const currentZoom = map.getZoom();
 
@@ -1206,7 +1599,6 @@
                     map.setView([39.065, 117.105]);
                 }
 
-                // 显示绘图控制按钮和提示文字
                 drawControls.style.display = 'flex';
                 showCustomMsg("已进入圈地模式，请点击“开始绘制”按钮");
 
@@ -1219,50 +1611,40 @@
         }
     }
 
-    // 点击“开始圈地”按钮（进入全屏并启动绘图）
     startDrawBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
 
-        // 隐藏 NDVI 控件（加载遥感图像的弹出控件）
         const ndviWrapper = document.getElementById("ndviSliderWrapper");
         if (ndviWrapper) {
             ndviWrapper.style.display = "none";
             console.log("🟡 已隐藏 NDVI 控件");
         }
 
-        // 移除 NDVI 图层
         if (ndviLayers.length > 0) {
             ndviLayers.forEach(layer => map.removeLayer(layer));
             ndviLayers = [];
             currentNdviTime = null;
 
-            // 确保 timeSelect 已定义后再操作
             if (timeSelect) {
                 timeSelect.value = "";
             }
 
             showCustomMsg("🗑️ 已移除所有 NDVI 图层");
-            // 调试输出当前地图的图层
             console.log("[DEBUG] 当前地图上的所有图层：", map._layers);
         } else {
             showCustomMsg("⚠️ 当前没有 NDVI 图层可移除");
         }
 
-        // 若当前已有绘制工具，先禁用
         if (currentDrawer) {
             currentDrawer.disable();
             currentDrawer = null;
         }
 
-        // 确保地图完全刷新后再进入绘图模式
         setTimeout(async () => {
-            // 进入绘图模式
             await enterDrawMode();
-        }, 0);  // 使用 setTimeout 延迟执行，确保之前的操作完全完成
+        }, 0);
     });
 
-
-    // 点击“开始绘图”按钮：启用绘图工具
     document.getElementById('btn-start').addEventListener('click', (e) => {
         e.stopPropagation();
         if (currentDrawer) {
@@ -1273,16 +1655,12 @@
         if (window.drawControl) {
             currentDrawer = new L.Draw.Polygon(map, window.drawControl.options.draw.polygon);
 
-            // 监听绘制完成事件
             map.on('draw:created', function (e) {
                 const layer = e.layer;
-                // 可以在这里处理绘制好的多边形数据
                 console.log('绘制完成:', layer.toGeoJSON());
 
-                // 标记绘制已完成
                 drawingFinished = true;
 
-                // 退出全屏
                 if (document.fullscreenElement) {
                     document.exitFullscreen();
                 }
@@ -1294,18 +1672,15 @@
         }
     });
 
-    // 完成绘图
     document.getElementById('btn-finish').addEventListener('click', (e) => {
         e.stopPropagation();
         if (currentDrawer) {
-            // 使用公开API触发绘制完成事件，而不是调用私有方法
             currentDrawer._fireCreated();
             currentDrawer.disable();
             currentDrawer = null;
         }
     });
 
-    // 撤销最后一个点
     function undoLastVertex(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -1318,12 +1693,11 @@
 
     const undoBtn = document.getElementById('btn-undo');
     undoBtn.addEventListener('click', undoLastVertex);
-    undoBtn.addEventListener('touchstart', undoLastVertex); // 手机兼容
+    undoBtn.addEventListener('touchstart', undoLastVertex);
 
-    // 取消绘图
     document.getElementById('btn-cancel').addEventListener('click', (e) => {
         e.stopPropagation();
-        drawingFinished = false; // 重置状态
+        drawingFinished = false;
         if (currentDrawer) {
             currentDrawer.disable();
             currentDrawer = null;
@@ -1334,8 +1708,6 @@
         }
     });
 
-
-    // 这里是单纯全屏展示的功能
     document.getElementById("btnFullscreenOnly").addEventListener("click", async () => {
         const mapContainer = document.getElementById("map");
         console.log('请求进入纯浏览全屏模式...');
@@ -1350,7 +1722,7 @@
             }
 
             setTimeout(() => {
-                map.invalidateSize();  // 重要：重绘地图以适配全屏尺寸
+                map.invalidateSize();
                 console.log('✅ 已进入纯地图全屏模式');
             }, 300);
 
@@ -1359,18 +1731,16 @@
             alert("浏览器不支持或用户取消了全屏操作");
         }
     });
-    //自动退出全屏时恢复地图尺寸
+
     document.addEventListener("fullscreenchange", () => {
         if (!document.fullscreenElement) {
             console.log("🧭 退出了全屏模式");
             setTimeout(() => {
-                map.invalidateSize();  // 退出全屏后也要刷新地图
+                map.invalidateSize();
             }, 300);
         }
     });
 
-
-    // 显示提示信息
     function showCustomMsg(text, duration = 3000) {
         const tip = document.getElementById('drawTip');
         if (!tip) return;
@@ -1388,7 +1758,6 @@
         }, duration);
     }
 
-
     // 查询地块功能（layui）
     layui.use(['layer', 'laytpl'], function () {
         const layer = layui.layer;
@@ -1396,8 +1765,7 @@
 
         document.getElementById('queryPlot').onclick = async function () {
             try {
-                // http://123.56.228.32:8080请求，添加token头
-                const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                const res = await fetch("http://localhost:8080/admin/plots", {
                     headers: {
                         "token": token
                     }
@@ -1499,7 +1867,8 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script src="https://unpkg.com/leaflet-image/leaflet-image.js"></script>
-<script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>
+<!--<script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>-->
+<script src="./layui/layui.js"></script>
 <!-- Leaflet Draw 中文配置（覆盖默认英文） -->
 <script>
     L.drawLocal = {
@@ -1633,6 +2002,16 @@
 <style>
     @keyframes blink {
         50% { opacity: 0.6; }
+    }
+    .leaflet-div-icon.leaflet-editing-icon {
+        width: 12px !important;
+        height: 12px !important;
+        margin-left: -3px !important;
+        margin-top: -3px !important;
+        border-radius: 50% !important;
+        background: #00c853 !important;
+        border: 1px solid #ffffff !important;
+        box-shadow: 0 0 4px rgba(0,0,0,0.4);
     }
 </style>
 

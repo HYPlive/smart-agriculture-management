@@ -160,7 +160,7 @@ To do some in-browser testing do:
 npm run dev
 ```
 
-and navigate to `http://localhost:8090/test/`
+and navigate to `123.56.228.32:8090/test/`
 
 To build the library do:
 

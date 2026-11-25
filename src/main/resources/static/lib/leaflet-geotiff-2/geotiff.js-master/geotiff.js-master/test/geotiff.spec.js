@@ -18,7 +18,7 @@ import DataView64 from '../dist-module/dataview64.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Set up a node server to make tiffs available at localhost:3000/data, and a worker pool
+// Set up a node server to make tiffs available at 123.56.228.32:3000/data, and a worker pool
 let server = null;
 let pool = null;
 before(async () => {
@@ -156,8 +156,8 @@ describe('writeTypedArrays', () => {
 describe('GeoTIFF - external overviews', () => {
   it('Can load', async () => {
     const tiff = await fromUrls(
-      'http://localhost:3000/data/overviews_external.tiff',
-      ['http://localhost:3000/data/overviews_external.tiff.ovr'],
+      '123.56.228.32:3000/data/overviews_external.tiff',
+      ['123.56.228.32:3000/data/overviews_external.tiff.ovr'],
     );
     const count = await tiff.getImageCount();
     expect(count).to.equal(5);

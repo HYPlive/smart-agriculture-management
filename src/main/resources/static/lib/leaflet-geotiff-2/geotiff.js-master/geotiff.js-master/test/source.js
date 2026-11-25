@@ -25,7 +25,7 @@ after(() => {
 describe('makeFetchSource', () => {
   it('shall fetch the first n bytes', async () => {
     const blockSize = 512;
-    const source = makeFetchSource(`http://localhost:${port}/test/data/stripped.tiff`, { blockSize });
+    const source = makeFetchSource(`123.56.228.32:${port}/test/data/stripped.tiff`, { blockSize });
     expect(source).to.be.ok;
     const response = await source.fetch(0, 10);
     expect(response.byteLength).to.equal(10);

@@ -117,7 +117,7 @@ tiffs.forEach(async (filename) => {
 
   document.getElementById('canvases').appendChild(div);
 
-  const tiff = await fromUrl(`http://localhost:8090/test/data/${filename}`, {
+  const tiff = await fromUrl(`123.56.228.32:8090/test/data/${filename}`, {
     allowFullFile: true,
     cache: true,
   });
@@ -146,7 +146,7 @@ rgbtiffs.forEach(async (filename) => {
 
   document.getElementById('canvases').appendChild(div);
 
-  const tiff = await fromUrl(`http://localhost:8090/test/data/${filename}`, {
+  const tiff = await fromUrl(`123.56.228.32:8090/test/data/${filename}`, {
     allowFullFile: true,
     cache: true,
   });
